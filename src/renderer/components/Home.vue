@@ -101,6 +101,10 @@ export default {
         await git.push();
         this.$message.success(`${name} upload successfully`);
         this.isUploading = false
+
+        setTimeout(() => {
+          this.getAllFiles();
+        }, 100);
       }
     },
     onTogglePic (checked) {
