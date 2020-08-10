@@ -1,8 +1,8 @@
 {
   "name": "electron-github-cdn",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "author": "cc",
-  "description": "parse github file to cdn",
+  "description": "Parse GitHub file url to jsdelivr's cdn.",
   "license": "MIT",
   "main": "./dist/electron/main.js",
   "scripts": {
