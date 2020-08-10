@@ -1,15 +1,18 @@
 <template>
   <div class="wrapper">
     <div class="wrap-head">
-      <img class="logo" src="https://img.alicdn.com/tfs/TB1AD6vQ.Y1gK0jSZFMXXaWcVXa-800-665.png" /> X
-      <img class="logo logo-jsdelivr" src="https://img.alicdn.com/tfs/TB1kQLSQ7L0gK0jSZFAXXcA9pXa-140-34.svg" />
+      <div class="wrap-logo">
+        <img class="logo" src="https://img.alicdn.com/tfs/TB1AD6vQ.Y1gK0jSZFMXXaWcVXa-800-665.png" />
+        <span>x</span>
+        <img class="logo logo-jsdelivr" src="https://img.alicdn.com/tfs/TB1kQLSQ7L0gK0jSZFAXXcA9pXa-140-34.svg" />
+      </div>
       <p class="title">GitHub & JSDELIVR</p>
       <p>
         All GitHub files with jsdelivr's cdn url.
       </p>
       <a-button type="primary" icon="github" @click="setRepoPath">选取仓库</a-button>
       <span v-if="repoPath">仓库地址：<b class="repo-path">{{repoPath}}</b></span>
-      <div class="repo-wrap" v-if="repoPath">
+      <div class="wrap-repo" v-if="repoPath">
         <a-button v-if="!customDir" icon="folder-add" @click="selectDir">选择文件夹</a-button>
         <p v-if="customDir">文件将存储在:
           <a-tag closable @close="customDir = ''">
@@ -98,7 +101,7 @@ export default {
       const { path, name, status } = info.file;
       if (!status) {
         this.isUploading = true
-        const filePath = this.customDir + '/' + name
+        const filePath = this.customDir || this.repoPath + '/' + name
         fs.copyFileSync(path, filePath);
         const git = simpleGit({
           baseDir: this.repoPath,
@@ -125,7 +128,7 @@ export default {
       }
     },
     setRepoPath () {
-      dialog.showOpenDialog({ properties: ['openDirectory'] }, filePath => {
+      dialog.showOpenDialog({ properties: ['openDirectory'], message: '选择 GitHub 仓库根目录' }, filePath => {
         if (filePath && filePath.length === 1) {
           if (isGitRepo(filePath[0])) {
             const repoPath = filePath[0];
@@ -133,7 +136,6 @@ export default {
             if (!cdnUrl) this.$message.error('需要选择一个 GitHub 仓库！');
             this.resetData();
             this.repoPath = repoPath;
-            this.customDir = repoPath;
             this.cdnUrl = cdnUrl;
             this.getAllFiles();
           } else {
@@ -143,7 +145,11 @@ export default {
       });
     },
     selectDir () {
-      dialog.showOpenDialog({ defaultPath: this.repoPath, properties: ['openDirectory', 'createDirectory'] }, filePath => {
+      dialog.showOpenDialog({
+        defaultPath: this.repoPath,
+        properties: ['openDirectory', 'createDirectory'],
+        message: '选择要存储文件的目录'
+      }, filePath => {
         if (filePath && filePath.length === 1 && filePath[0].startsWith(this.repoPath)) {
           this.customDir = filePath[0];
         }
@@ -211,23 +217,32 @@ body {
   text-align: center;
 }
 
-.repo-wrap {
+.wrap-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+  span {
+    margin: 0 20px;
+    font-size: 50px;
+    font-weight: 100;
+  }
+}
+.logo {
+  width: 120px;
+  height: auto;
+}
+.logo-jsdelivr {
+  width: 145px;
+}
+
+.wrap-repo {
   margin: 5px 0;
 }
 .repo-path {
   padding: 3px;
   background: #40a9ff;
   color: #fff;
-}
-
-.logo {
-  width: 120px;
-  height: auto;
-  margin-bottom: 20px;
-}
-
-.logo-jsdelivr {
-  width: 145px;
 }
 
 .upload-box {
