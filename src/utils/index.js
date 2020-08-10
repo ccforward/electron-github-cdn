@@ -1,5 +1,7 @@
 const fs = require('fs');
 const path = require('path');
+const parseGit = require('parse-git-config');
+const hostedGitInfo = require('hosted-git-info');
 
 export function isGitRepo (filePath) {
   return fs.existsSync(path.join(filePath, '.git'))
@@ -28,4 +30,20 @@ export function fileDisplay (filePath) {
 export function isPic (filePath) {
   const types = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico', '.bmp']
   return types.includes(path.extname(filePath));
+}
+
+export function getCDNUrl (repoPath) {
+  const infox = parseGit.sync({ path: `${repoPath}/.git/config` });
+  const head = fs.readFileSync(`${repoPath}/.git/head`)
+  const branch = head.toString().split('/').reverse()[0].trim()
+  const info = parseGit.expandKeys(infox)
+  const githubUrl = info.remote.origin.url;
+  if (githubUrl.indexOf('github') < 0) {
+    return false;
+  }
+  const {
+    user,
+    project
+  } = hostedGitInfo.fromUrl(githubUrl)
+  return `https://cdn.jsdelivr.net/gh/${user}/${project}@${branch}`;
 }

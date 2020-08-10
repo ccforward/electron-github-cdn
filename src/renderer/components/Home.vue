@@ -31,7 +31,7 @@
     </div>
     <main class="main-content">
       <div class="operation-bar" v-if="repoPath">
-        <a-button type="primary" :icon="loadingFile ? 'sync' : 'reload'" @click="getAllFiles">
+        <a-button type="primary" :icon="loadingFile ? 'loading' : 'reload'" @click="getAllFiles">
           Refresh
         </a-button>
         <span>Only Images</span>
@@ -63,11 +63,9 @@
 </template>
 
 <script>
-import { isGitRepo, fileDisplay, isPic } from '@root/utils';
+import { isGitRepo, fileDisplay, isPic, getCDNUrl } from '@root/utils';
 const fs = require('fs');
 const electron = require('electron');
-const parseGit = require('parse-git-config');
-const hostedGitInfo = require('hosted-git-info');
 const simpleGit = require('simple-git');
 const { dialog } = electron.remote;
 
@@ -120,19 +118,11 @@ export default {
         if (filePath && filePath.length === 1) {
           if (isGitRepo(filePath[0])) {
             const repoPath = filePath[0];
-            const infox = parseGit.sync({ path: `${repoPath}/.git/config` });
-            const head = fs.readFileSync(`${repoPath}/.git/head`)
-            const branch = head.toString().split('/').reverse()[0].trim()
-            const info = parseGit.expandKeys(infox)
-            const githubUrl = info.remote.origin.url;
-            if (githubUrl.indexOf('github') < 0) {
-              this.$message.error('需要选择一个 GitHub 仓库！');
-              return;
-            }
+            const cdnUrl = getCDNUrl(repoPath);
+            if (!cdnUrl) this.$message.error('需要选择一个 GitHub 仓库！');
             this.resetData();
-            const { user, project } = hostedGitInfo.fromUrl(info.remote.origin.url)
             this.repoPath = repoPath;
-            this.cdnUrl = `https://cdn.jsdelivr.net/gh/${user}/${project}@${branch}`
+            this.cdnUrl = cdnUrl;
             this.getAllFiles();
           } else {
             this.$message.error('需要选择一个 GitHub 仓库！');
