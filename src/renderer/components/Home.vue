@@ -1,13 +1,22 @@
 <template>
   <div class="wrapper">
     <div class="wrap-head">
-      <img class="logo" src="https://img.alicdn.com/tfs/TB1AD6vQ.Y1gK0jSZFMXXaWcVXa-800-665.png" />
-      <p class="title">GitHub & CDN</p>
+      <img class="logo" src="https://img.alicdn.com/tfs/TB1AD6vQ.Y1gK0jSZFMXXaWcVXa-800-665.png" /> X
+      <img class="logo logo-jsdelivr" src="https://img.alicdn.com/tfs/TB1kQLSQ7L0gK0jSZFAXXcA9pXa-140-34.svg" />
+      <p class="title">GitHub & JSDELIVR</p>
       <p>
         All GitHub files with jsdelivr's cdn url.
       </p>
       <a-button type="primary" icon="github" @click="setRepoPath">选取仓库</a-button>
       <span v-if="repoPath">仓库地址：<b class="repo-path">{{repoPath}}</b></span>
+      <div class="repo-wrap" v-if="repoPath">
+        <a-button v-if="!customDir" icon="folder-add" @click="selectDir">选择文件夹</a-button>
+        <p v-if="customDir">文件将存储在:
+          <a-tag closable @close="customDir = ''">
+            {{customDir}}
+          </a-tag>
+        </p>
+      </div>
     </div>
     <div v-if="repoPath" class="upload-box">
       <a-spin :spinning="isUploading" tip="Loading...">
@@ -75,6 +84,7 @@ export default {
     return {
       onlyPic: true,
       repoPath: '',
+      customDir: '',
       cdnUrl: '',
       listFiles: [],
       allFiles: [],
@@ -88,13 +98,14 @@ export default {
       const { path, name, status } = info.file;
       if (!status) {
         this.isUploading = true
-        fs.copyFileSync(path, this.repoPath + '/' + name);
+        const filePath = this.customDir + '/' + name
+        fs.copyFileSync(path, filePath);
         const git = simpleGit({
           baseDir: this.repoPath,
           binary: 'git',
           maxConcurrentProcesses: 6,
         });
-        await git.add(name);
+        await git.add(filePath);
         await git.commit(`feat: add file ${name}`);
         await git.push();
         this.$message.success(`${name} upload successfully`);
@@ -122,11 +133,19 @@ export default {
             if (!cdnUrl) this.$message.error('需要选择一个 GitHub 仓库！');
             this.resetData();
             this.repoPath = repoPath;
+            this.customDir = repoPath;
             this.cdnUrl = cdnUrl;
             this.getAllFiles();
           } else {
             this.$message.error('需要选择一个 GitHub 仓库！');
           }
+        }
+      });
+    },
+    selectDir () {
+      dialog.showOpenDialog({ defaultPath: this.repoPath, properties: ['openDirectory', 'createDirectory'] }, filePath => {
+        if (filePath && filePath.length === 1 && filePath[0].startsWith(this.repoPath)) {
+          this.customDir = filePath[0];
         }
       });
     },
@@ -159,7 +178,9 @@ export default {
     },
 
     resetData () {
+      this.onlyPic = true;
       this.repoPath = '';
+      this.customDir = '';
       this.cdnUrl = '';
       this.listFiles = [];
       this.allFiles = [];
@@ -190,9 +211,12 @@ body {
   text-align: center;
 }
 
+.repo-wrap {
+  margin: 5px 0;
+}
 .repo-path {
   padding: 3px;
-  background: #222;
+  background: #40a9ff;
   color: #fff;
 }
 
@@ -200,6 +224,10 @@ body {
   width: 120px;
   height: auto;
   margin-bottom: 20px;
+}
+
+.logo-jsdelivr {
+  width: 145px;
 }
 
 .upload-box {
