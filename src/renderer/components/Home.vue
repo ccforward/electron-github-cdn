@@ -152,6 +152,8 @@ export default {
       }, filePath => {
         if (filePath && filePath.length === 1 && filePath[0].startsWith(this.repoPath)) {
           this.customDir = filePath[0];
+        } else {
+          this.$message.error('需要选择当前 GitHub 仓库的子目录！');
         }
       });
     },
