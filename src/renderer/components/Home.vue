@@ -99,24 +99,30 @@ export default {
   methods: {
     async onUpload (info) {
       const { path, name, status } = info.file;
+
       if (!status) {
         this.isUploading = true
-        const filePath = this.customDir || this.repoPath + '/' + name
-        fs.copyFileSync(path, filePath);
-        const git = simpleGit({
-          baseDir: this.repoPath,
-          binary: 'git',
-          maxConcurrentProcesses: 6,
-        });
-        await git.add(filePath);
-        await git.commit(`feat: add file ${name}`);
-        await git.push();
-        this.$message.success(`${name} upload successfully`);
-        this.isUploading = false
+        const filePath = (this.customDir || this.repoPath) + '/' + name
+        try {
+          fs.copyFileSync(path, filePath);
+          const git = simpleGit({
+            baseDir: this.repoPath,
+            binary: 'git',
+            maxConcurrentProcesses: 6,
+          });
+          await git.add(filePath);
+          await git.commit(`feat: add file ${name}`);
+          await git.push();
+          this.$message.success(`${name} upload successfully`);
+          this.isUploading = false
 
-        setTimeout(() => {
-          this.getAllFiles();
-        }, 100);
+          setTimeout(() => {
+            this.getAllFiles();
+          }, 100);
+        } catch (e) {
+          this.$message.error(`${name} upload failed`);
+          this.isUploading = false
+        }
       }
     },
     onTogglePic (checked) {
@@ -152,7 +158,7 @@ export default {
       }, filePath => {
         if (filePath && filePath.length === 1 && filePath[0].startsWith(this.repoPath)) {
           const ignoreFile = `${this.repoPath}/.gitignore`;
-          if (fs.existsSync(ignoreFile) && !isPathIgnored(ignoreFile, filePath[0].replace(this.repoPath + '/', ''))) {
+          if (fs.existsSync(ignoreFile) && isPathIgnored(ignoreFile, filePath[0].replace(this.repoPath + '/', '') + '/')) {
             this.$message.error(`${filePath[0]} is ignored!`);
           } else {
             this.customDir = filePath[0];
@@ -193,7 +199,6 @@ export default {
     open (link) {
       this.$electron.shell.openExternal(link);
     },
-
     resetData () {
       this.onlyPic = true;
       this.repoPath = '';
