@@ -2,6 +2,19 @@ const fs = require('fs');
 const path = require('path');
 const parseGit = require('parse-git-config');
 const hostedGitInfo = require('hosted-git-info');
+const ignore = require('ignore');
+
+export function checkFilesIgnore (ignoreFile, files) {
+  const ig = ignore().add(fs.readFileSync(ignoreFile).toString())
+  return files.filter(file => {
+    return !ig.ignores(file.path)
+  })
+}
+
+export function isPathIgnored (ignoreFile, path) {
+  const ig = ignore().add(fs.readFileSync(ignoreFile).toString())
+  return ig.ignores(path)
+}
 
 export function isGitRepo (filePath) {
   return fs.existsSync(path.join(filePath, '.git'))

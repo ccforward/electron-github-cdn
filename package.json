@@ -1,6 +1,6 @@
 {
   "name": "electron-github-cdn",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "cc",
   "description": "Parse GitHub file url to jsdelivr's cdn.",
   "license": "MIT",
@@ -56,6 +56,7 @@
     "ant-design-vue": "^1.6.4",
     "axios": "^0.18.0",
     "hosted-git-info": "^3.0.5",
+    "ignore": "^5.1.8",
     "parse-git-config": "^3.0.0",
     "simple-git": "^2.17.0",
     "vue": "^2.5.16",

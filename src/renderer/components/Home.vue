@@ -75,7 +75,7 @@
 </template>
 
 <script>
-import { isGitRepo, fileDisplay, isPic, getCDNUrl } from '@root/utils';
+import { isPathIgnored, checkFilesIgnore, isGitRepo, fileDisplay, isPic, getCDNUrl } from '@root/utils';
 const fs = require('fs');
 const electron = require('electron');
 const simpleGit = require('simple-git');
@@ -151,7 +151,12 @@ export default {
         message: '选择要存储文件的目录'
       }, filePath => {
         if (filePath && filePath.length === 1 && filePath[0].startsWith(this.repoPath)) {
-          this.customDir = filePath[0];
+          const ignoreFile = `${this.repoPath}/.gitignore`;
+          if (fs.existsSync(ignoreFile) && !isPathIgnored(ignoreFile, filePath[0].replace(this.repoPath + '/', ''))) {
+            this.$message.error(`${filePath[0]} is ignored!`);
+          } else {
+            this.customDir = filePath[0];
+          }
         } else {
           this.$message.error('需要选择当前 GitHub 仓库的子目录！');
         }
@@ -161,7 +166,7 @@ export default {
       if (this.repoPath) {
         this.loadingFile = true;
         const allPaths = fileDisplay(this.repoPath, []);
-        const files = [];
+        let files = [];
         allPaths.forEach(path => {
           files.push({
             name: path.split('/').reverse()[0].trim(),
@@ -170,6 +175,10 @@ export default {
             isPic: isPic(path)
           })
         })
+        const ignoreFile = `${this.repoPath}/.gitignore`;
+        if (fs.existsSync(ignoreFile)) {
+          files = checkFilesIgnore(ignoreFile, files)
+        }
         this.allFiles = files;
         if (this.onlyPic) {
           this.listFiles = this.allFiles.filter(item => item.isPic)
