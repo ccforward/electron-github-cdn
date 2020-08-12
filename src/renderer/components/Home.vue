@@ -200,6 +200,7 @@ export default {
 
 <style>
 .ant-upload.ant-upload-drag {
+  padding: 20px 0;
   border: 2px dashed #d9d9d9;
 }
 </style>
@@ -248,7 +249,7 @@ body {
 }
 
 .upload-box {
-  width: 50%;
+  width: 65%;
   margin: 20px auto;
   background: #fff;
   border-width: 2px;
