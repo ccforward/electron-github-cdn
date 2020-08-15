@@ -79,6 +79,9 @@ import { isPathIgnored, checkFilesIgnore, isGitRepo, fileDisplay, isPic, getCDNU
 const fs = require('fs');
 const electron = require('electron');
 const simpleGit = require('simple-git');
+const Store = require('electron-store');
+
+const store = new Store();
 const { dialog } = electron.remote;
 
 export default {
@@ -95,6 +98,13 @@ export default {
       isUploading: false,
       loadingFile: false,
     };
+  },
+  created () {
+    const storedRepo = store.get('repoPath');
+    if (storedRepo) {
+      this.__initRepoPath(storedRepo);
+      this.customDir = this.repoPath ? store.get('customDir') : '';
+    }
   },
   methods: {
     async onUpload (info) {
@@ -136,19 +146,23 @@ export default {
     setRepoPath () {
       dialog.showOpenDialog({ properties: ['openDirectory'], message: '选择 GitHub 仓库根目录' }, filePath => {
         if (filePath && filePath.length === 1) {
-          if (isGitRepo(filePath[0])) {
-            const repoPath = filePath[0];
-            const cdnUrl = getCDNUrl(repoPath);
-            if (!cdnUrl) this.$message.error('需要选择一个 GitHub 仓库！');
-            this.resetData();
-            this.repoPath = repoPath;
-            this.cdnUrl = cdnUrl;
-            this.getAllFiles();
-          } else {
-            this.$message.error('需要选择一个 GitHub 仓库！');
-          }
+          this.__initRepoPath(filePath[0]);
         }
       });
+    },
+    __initRepoPath (filePath) {
+      if (isGitRepo(filePath)) {
+        const repoPath = filePath;
+        const cdnUrl = getCDNUrl(repoPath);
+        if (!cdnUrl) this.$message.error('需要选择一个 GitHub 仓库！');
+        this.resetData();
+        this.repoPath = repoPath;
+        store.set('repoPath', repoPath);
+        this.cdnUrl = cdnUrl;
+        this.getAllFiles();
+      } else {
+        this.$message.error('需要选择一个 GitHub 仓库！');
+      }
     },
     selectDir () {
       dialog.showOpenDialog({
@@ -162,6 +176,7 @@ export default {
             this.$message.error(`${filePath[0]} is ignored!`);
           } else {
             this.customDir = filePath[0];
+            store.set('customDir', this.customDir);
           }
         } else {
           this.$message.error('需要选择当前 GitHub 仓库的子目录！');
