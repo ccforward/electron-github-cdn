@@ -2,9 +2,13 @@
   <div class="wrapper">
     <div class="wrap-head">
       <div class="wrap-logo">
-        <img class="logo" src="https://img.alicdn.com/tfs/TB1AD6vQ.Y1gK0jSZFMXXaWcVXa-800-665.png" />
+        <a href="#" @click.prevent="open('https://github.com/')">
+          <img class="logo" src="https://img.alicdn.com/tfs/TB1AD6vQ.Y1gK0jSZFMXXaWcVXa-800-665.png" />
+        </a>
         <span>x</span>
-        <img class="logo logo-jsdelivr" src="https://img.alicdn.com/tfs/TB1kQLSQ7L0gK0jSZFAXXcA9pXa-140-34.svg" />
+        <a href="#" @click.prevent="open('https://www.jsdelivr.com/')">
+          <img class="logo logo-jsdelivr" src="https://img.alicdn.com/tfs/TB1kQLSQ7L0gK0jSZFAXXcA9pXa-140-34.svg" />
+        </a>
       </div>
       <p class="title">GitHub & JSDELIVR</p>
       <p>
