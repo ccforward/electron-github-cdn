@@ -1,6 +1,8 @@
 'use strict'
 
 import { app, BrowserWindow } from 'electron'
+import path from 'path';
+import { menubar } from 'menubar';
 
 /**
  * Set `__static` path to static files in production
@@ -30,6 +32,27 @@ function createWindow () {
   mainWindow.on('closed', () => {
     mainWindow = null
   })
+
+  let mb = menubar({
+    index: winURL + '/#/menu',
+    icon: path.resolve(__dirname, '../assets/menu.png'),
+    // tooltip: 'MyApp',
+    // width: 350,
+    // height: 460,
+    // fullscreenable: true,
+    // resizable: false,
+    // transparent: true,
+    // webPreferences: {
+    //   backgroundThrottling: false,
+    // },
+    // alwaysOnTop: true,
+    // showOnAllWorkspaces: false,
+    // preloadWindow: true,
+  });
+
+  mb.on('after-create-window', () => {
+    // mb.window.webContents.openDevTools({ mode: 'undocked' });
+  });
 }
 
 app.on('ready', createWindow)
