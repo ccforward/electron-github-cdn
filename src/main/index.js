@@ -72,6 +72,25 @@ function createWindow () {
         type: 'separator'
       },
       {
+        label: '设置/上传',
+        type: 'normal',
+        click: () => {
+          if (mainWindow) {
+            mainWindow.show()
+          } else {
+            mainWindow = new BrowserWindow({
+              height: 563,
+              useContentSize: true,
+              width: 1000
+            })
+            mainWindow.loadURL(winURL)
+            mainWindow.on('closed', () => {
+              mainWindow = null
+            })
+          }
+        }
+      },
+      {
         label: '清空',
         type: 'normal',
         click: () => {
