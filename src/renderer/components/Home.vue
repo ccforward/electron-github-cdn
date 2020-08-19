@@ -17,9 +17,9 @@
       <a-button type="primary" icon="github" @click="setRepoPath">选取仓库</a-button>
       <span v-if="repoPath">仓库地址：<b class="repo-path">{{repoPath}}</b></span>
       <div class="wrap-repo" v-if="repoPath">
-        <a-button v-if="!customDir" icon="folder-add" @click="selectDir">选择文件夹</a-button>
+        <a-button v-if="!customDir" icon="folder-add" @click="setCustomDir">选择文件夹</a-button>
         <p v-if="customDir">文件将存储在:
-          <a-tag closable @close="customDir = ''">
+          <a-tag closable @close="deleteCustomDir">
             {{customDir}}
           </a-tag>
         </p>
@@ -87,6 +87,7 @@ const Store = require('electron-store');
 
 const store = new Store();
 const { dialog } = electron.remote;
+const { ipcRenderer } = electron
 
 export default {
   name: 'home-page',
@@ -108,6 +109,7 @@ export default {
     if (storedRepo) {
       this.__initRepoPath(storedRepo);
       this.customDir = this.repoPath ? store.get('customDir') : '';
+      ipcRenderer.send('onCustomDirChange', this.customDir);
     }
   },
   methods: {
@@ -168,7 +170,7 @@ export default {
         this.$message.error('需要选择一个 GitHub 仓库！');
       }
     },
-    selectDir () {
+    setCustomDir () {
       dialog.showOpenDialog({
         defaultPath: this.repoPath,
         properties: ['openDirectory', 'createDirectory'],
@@ -176,16 +178,21 @@ export default {
       }, filePath => {
         if (filePath && filePath.length === 1 && filePath[0].startsWith(this.repoPath)) {
           const ignoreFile = `${this.repoPath}/.gitignore`;
-          if (fs.existsSync(ignoreFile) && isPathIgnored(ignoreFile, filePath[0].replace(this.repoPath + '/', '') + '/')) {
+          if ((filePath[0] !== this.repoPath) && fs.existsSync(ignoreFile) && isPathIgnored(ignoreFile, filePath[0].replace(this.repoPath + '/', '') + '/')) {
             this.$message.error(`${filePath[0]} is ignored!`);
           } else {
             this.customDir = filePath[0];
             store.set('customDir', this.customDir);
+            ipcRenderer.send('onCustomDirChange', this.customDir);
           }
         } else {
           this.$message.error('需要选择当前 GitHub 仓库的子目录！');
         }
       });
+    },
+    deleteCustomDir () {
+      this.customDir = '';
+      ipcRenderer.send('onCustomDirChange', this.customDir);
     },
     getAllFiles () {
       if (this.repoPath) {

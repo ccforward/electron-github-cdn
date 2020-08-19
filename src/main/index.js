@@ -1,8 +1,16 @@
 'use strict'
 
-import { app, BrowserWindow } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  Menu,
+  Tray,
+  ipcMain,
+  clipboard,
+  // Notification,
+} from 'electron'
 import path from 'path';
-import { menubar } from 'menubar';
+// import { menubar } from 'menubar';
 
 /**
  * Set `__static` path to static files in production
@@ -13,6 +21,9 @@ if (process.env.NODE_ENV !== 'development') {
 }
 
 let mainWindow
+let tray
+let customDir = '';
+const imgList = [];
 const winURL = process.env.NODE_ENV === 'development'
   ? `http://localhost:9080`
   : `file://${__dirname}/index.html`
@@ -33,26 +44,71 @@ function createWindow () {
     mainWindow = null
   })
 
-  let mb = menubar({
-    index: winURL + '/#/menu',
-    icon: path.resolve(__dirname, '../assets/menu.png'),
-    // tooltip: 'MyApp',
-    // width: 350,
-    // height: 460,
-    // fullscreenable: true,
-    // resizable: false,
-    // transparent: true,
-    // webPreferences: {
-    //   backgroundThrottling: false,
-    // },
-    // alwaysOnTop: true,
-    // showOnAllWorkspaces: false,
-    // preloadWindow: true,
-  });
+  tray = new Tray(path.resolve(__dirname, '../assets/menu.png'))
 
-  mb.on('after-create-window', () => {
-    // mb.window.webContents.openDevTools({ mode: 'undocked' });
-  });
+  tray.on('click', () => {
+    const more = {
+      label: '更多',
+      type: 'submenu',
+      submenu: [
+        { label: '退出', type: 'normal', click: () => { app.quit(); } },
+      ],
+    };
+    const clipboardImage = clipboard.readImage();
+    if (clipboardImage && !clipboardImage.isEmpty()) {
+      const ratio = clipboardImage.getAspectRatio();
+      const img = clipboardImage.resize({
+        width: 100,
+        height: ratio / 100,
+      });
+      imgList.push({
+        img,
+        raw: clipboardImage
+      })
+    }
+    const menus = [
+      {
+        label: '',
+        type: 'separator'
+      },
+      {
+        label: '清空',
+        type: 'normal',
+        click: () => {
+          imgList.splice(0, imgList.length);
+          // const notify = new Notification({
+          //   title: '通知',
+          //   body: '清空'
+          // });
+          // notify.show();
+        }
+      },
+
+      more
+    ];
+    if (imgList.length) {
+      imgList.map((item, index) => {
+        menus.unshift({
+          label: (index + 1).toString(),
+          icon: item.img,
+          type: 'normal',
+        })
+      });
+    }
+    if (!customDir) {
+      menus.unshift({
+        label: '暂未设置存储路径',
+        type: 'normal',
+        enabled: false
+      })
+    }
+    const contextMenu = Menu.buildFromTemplate(menus);
+    tray.popUpContextMenu(contextMenu);
+  })
+
+  ipcMain.on('onCustomDirChange', (sys, msg) => {
+    customDir = msg
+  })
 }
 
 app.on('ready', createWindow)
