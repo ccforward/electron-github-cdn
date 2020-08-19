@@ -44,7 +44,7 @@ function createWindow () {
     mainWindow = null
   })
 
-  tray = new Tray(path.resolve(__dirname, '../assets/menu.png'))
+  tray = new Tray(path.resolve(__dirname, '../assets/icon@3x.png'))
 
   tray.on('click', () => {
     const more = {
