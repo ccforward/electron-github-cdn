@@ -109,7 +109,8 @@ export default {
     if (storedRepo) {
       this.__initRepoPath(storedRepo);
       this.customDir = this.repoPath ? store.get('customDir') : '';
-      ipcRenderer.send('onCustomDirChange', this.customDir);
+      ipcRenderer.send('onUploadDirChange', this.customDir);
+      ipcRenderer.send('onRepoPathChange', this.repoPath);
     }
   },
   methods: {
@@ -166,6 +167,7 @@ export default {
         store.set('repoPath', repoPath);
         this.cdnUrl = cdnUrl;
         this.getAllFiles();
+        ipcRenderer.send('onRepoPathChange', this.repoPath);
       } else {
         this.$message.error('需要选择一个 GitHub 仓库！');
       }
@@ -183,7 +185,7 @@ export default {
           } else {
             this.customDir = filePath[0];
             store.set('customDir', this.customDir);
-            ipcRenderer.send('onCustomDirChange', this.customDir);
+            ipcRenderer.send('onUploadDirChange', this.customDir);
           }
         } else {
           this.$message.error('需要选择当前 GitHub 仓库的子目录！');
@@ -192,7 +194,7 @@ export default {
     },
     deleteCustomDir () {
       this.customDir = '';
-      ipcRenderer.send('onCustomDirChange', this.customDir);
+      ipcRenderer.send('onUploadDirChange', this.customDir);
     },
     getAllFiles () {
       if (this.repoPath) {

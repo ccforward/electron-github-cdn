@@ -7,10 +7,11 @@ import {
   Tray,
   ipcMain,
   clipboard,
-  // Notification,
+  Notification,
 } from 'electron'
 import path from 'path';
-// import { menubar } from 'menubar';
+import fs from 'fs';
+import { simpleGit } from 'simple-git';
 
 /**
  * Set `__static` path to static files in production
@@ -21,17 +22,25 @@ if (process.env.NODE_ENV !== 'development') {
 }
 
 let mainWindow
+
 let tray
-let customDir = '';
+let uploadDir = '';
+let repoPath = '';
 const imgList = [];
+
 const winURL = process.env.NODE_ENV === 'development'
   ? `http://localhost:9080`
-  : `file://${__dirname}/index.html`
+  : `file://${__dirname}/index.html`;
 
-function createWindow () {
-  /**
-   * Initial window options
-   */
+const triggerNotify = ({ title, body }) => {
+  const notify = new Notification({
+    title,
+    body
+  });
+  notify.show();
+}
+
+const createWindow = () => {
   mainWindow = new BrowserWindow({
     height: 563,
     useContentSize: true,
@@ -43,9 +52,11 @@ function createWindow () {
   mainWindow.on('closed', () => {
     mainWindow = null
   })
+}
 
+const initMenubar = () => {
+  // menubar 操作逻辑
   tray = new Tray(path.resolve(__dirname, '../assets/icon@3x.png'))
-
   tray.on('click', () => {
     const more = {
       label: '更多',
@@ -55,6 +66,7 @@ function createWindow () {
       ],
     };
     const clipboardImage = clipboard.readImage();
+
     if (clipboardImage && !clipboardImage.isEmpty()) {
       const ratio = clipboardImage.getAspectRatio();
       const img = clipboardImage.resize({
@@ -63,7 +75,34 @@ function createWindow () {
       });
       imgList.push({
         img,
-        raw: clipboardImage
+        raw: clipboardImage,
+        click: async () => {
+          const originPath = clipboard.read('public.file-url');
+          if (originPath) {
+            const name = path.basename(originPath);
+            const filePath = (uploadDir || repoPath) + '/' + name;
+            try {
+              fs.copyFileSync(originPath.replace('file://', ''), filePath);
+              const git = simpleGit({
+                baseDir: repoPath,
+                binary: 'git',
+                maxConcurrentProcesses: 6,
+              });
+              await git.add(filePath);
+              await git.commit(`feat: add file ${name}`);
+              await git.push();
+              triggerNotify({
+                title: '上传成功',
+                body: '👍'
+              })
+            } catch (e) {
+              triggerNotify({
+                title: '上传失败',
+                body: '请重试'
+              })
+            }
+          }
+        }
       })
     }
     const menus = [
@@ -78,21 +117,14 @@ function createWindow () {
           if (mainWindow) {
             mainWindow.show()
           } else {
-            mainWindow = new BrowserWindow({
-              height: 563,
-              useContentSize: true,
-              width: 1000
-            })
-            mainWindow.loadURL(winURL)
-            mainWindow.on('closed', () => {
-              mainWindow = null
-            })
+            createWindow();
           }
         }
       },
       {
         label: '清空',
         type: 'normal',
+        enabled: imgList.length > 0,
         click: () => {
           imgList.splice(0, imgList.length);
           // const notify = new Notification({
@@ -102,7 +134,6 @@ function createWindow () {
           // notify.show();
         }
       },
-
       more
     ];
     if (imgList.length) {
@@ -111,10 +142,11 @@ function createWindow () {
           label: (index + 1).toString(),
           icon: item.img,
           type: 'normal',
+          click: item.click
         })
       });
     }
-    if (!customDir) {
+    if (!uploadDir) {
       menus.unshift({
         label: '暂未设置存储路径',
         type: 'normal',
@@ -125,12 +157,23 @@ function createWindow () {
     tray.popUpContextMenu(contextMenu);
   })
 
-  ipcMain.on('onCustomDirChange', (sys, msg) => {
-    customDir = msg
+  ipcMain.on('onRepoPathChange', (sys, dir) => {
+    uploadDir = dir
+  })
+  ipcMain.on('onRepoPathChange', (sys, dir) => {
+    repoPath = dir
+  })
+  ipcMain.on('onUploadDirChange', (sys, dir) => {
+    uploadDir = dir
   })
 }
 
-app.on('ready', createWindow)
+const initWindow = () => {
+  createWindow();
+  initMenubar();
+}
+
+app.on('ready', initWindow)
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -140,7 +183,7 @@ app.on('window-all-closed', () => {
 
 app.on('activate', () => {
   if (mainWindow === null) {
-    createWindow()
+    initWindow()
   }
 })
 
