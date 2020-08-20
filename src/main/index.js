@@ -11,7 +11,7 @@ import {
 } from 'electron'
 import path from 'path';
 import fs from 'fs';
-import { simpleGit } from 'simple-git';
+import simpleGit from 'simple-git';
 
 /**
  * Set `__static` path to static files in production
@@ -157,9 +157,6 @@ const initMenubar = () => {
     tray.popUpContextMenu(contextMenu);
   })
 
-  ipcMain.on('onRepoPathChange', (sys, dir) => {
-    uploadDir = dir
-  })
   ipcMain.on('onRepoPathChange', (sys, dir) => {
     repoPath = dir
   })
