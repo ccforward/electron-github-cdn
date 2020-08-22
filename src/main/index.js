@@ -11,7 +11,10 @@ import {
 } from 'electron'
 import path from 'path';
 import fs from 'fs';
-import simpleGit from 'simple-git';
+import {
+  getCDNUrl,
+  upload,
+} from '../utils';
 
 /**
  * Set `__static` path to static files in production
@@ -78,37 +81,43 @@ const initMenubar = () => {
         img,
         raw: clipboardImage,
         click: async () => {
+          let ret = false;
+          let filePath = '';
           const originPath = clipboard.read('public.file-url');
           if (originPath) {
-            const name = path.basename(originPath);
-            const filePath = (uploadDir || repoPath) + '/' + name;
-            try {
-              fs.copyFileSync(originPath.replace('file://', ''), filePath);
-              const git = simpleGit({
-                baseDir: repoPath,
-                binary: 'git',
-                maxConcurrentProcesses: 6,
-              });
-              await git.add(filePath);
-              await git.commit(`feat: add file ${name}`);
-              await git.push();
-              triggerNotify({
-                title: '上传成功',
-                body: '👍'
-              })
-            } catch (e) {
-              triggerNotify({
-                title: '上传失败',
-                body: '请重试'
-              })
-            }
+            const fileName = path.basename(originPath);
+            filePath = (uploadDir || repoPath) + '/' + fileName;
+            fs.copyFileSync(originPath.replace('file://', ''), filePath);
+            ret = await upload({
+              repoPath,
+              filePath,
+              fileName,
+            });
           } else {
             const buffer = clipboardImage.toPNG();
             const d = new Date();
-            const name = d.getTime() + '.png';
-            const filePath = (uploadDir || repoPath) + '/' + name;
-            await fs.writeFile(filePath, buffer);
+            const fileName = d.getTime() + '.png';
+            filePath = (uploadDir || repoPath) + '/' + fileName;
+            fs.writeFileSync(filePath, buffer);
+            ret = await upload({
+              repoPath,
+              filePath,
+              fileName,
+            });
           }
+          if (ret) {
+            const fileUrl = filePath.replace(repoPath, getCDNUrl(repoPath));
+            clipboard.writeText(fileUrl);
+            return triggerNotify({
+              title: '上传成功',
+              body: '👍'
+            });
+          }
+          filePath && fs.unlinkSync(filePath);
+          triggerNotify({
+            title: '上传失败',
+            body: '请重试'
+          })
         }
       })
     }

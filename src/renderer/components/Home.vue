@@ -67,7 +67,7 @@
             <img
               v-if="item.isPic"
               slot="extra"
-              alt="logo"
+              alt="image"
               :src="item.cdn"
             />
             <a-icon v-else :style="{ fontSize: '30px', color: '#333' }" type="file-protect" />
@@ -79,10 +79,17 @@
 </template>
 
 <script>
-import { isPathIgnored, checkFilesIgnore, isGitRepo, fileDisplay, isPic, getCDNUrl } from '@root/utils';
+import {
+  isPathIgnored,
+  checkFilesIgnore,
+  isGitRepo,
+  fileDisplay,
+  isPic,
+  getCDNUrl,
+  upload,
+} from '@root/utils';
 const fs = require('fs');
 const electron = require('electron');
-const simpleGit = require('simple-git');
 const Store = require('electron-store');
 
 const store = new Store();
@@ -119,26 +126,23 @@ export default {
 
       if (!status) {
         this.isUploading = true
-        const filePath = (this.customDir || this.repoPath) + '/' + name
-        try {
-          fs.copyFileSync(path, filePath);
-          const git = simpleGit({
-            baseDir: this.repoPath,
-            binary: 'git',
-            maxConcurrentProcesses: 6,
-          });
-          await git.add(filePath);
-          await git.commit(`feat: add file ${name}`);
-          await git.push();
+        const filePath = (this.customDir || this.repoPath) + '/' + name;
+        fs.copyFileSync(path, filePath);
+        const ret = await upload({
+          repoPath: this.repoPath,
+          filePath,
+          fileName: name,
+        });
+        if (ret) {
           this.$message.success(`${name} upload successfully`);
-          this.isUploading = false
-
+          this.isUploading = false;
           setTimeout(() => {
             this.getAllFiles();
           }, 100);
-        } catch (e) {
+        } else {
+          filePath && fs.unlinkSync(filePath);
           this.$message.error(`${name} upload failed`);
-          this.isUploading = false
+          this.isUploading = false;
         }
       }
     },

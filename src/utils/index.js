@@ -3,6 +3,7 @@ const path = require('path');
 const parseGit = require('parse-git-config');
 const hostedGitInfo = require('hosted-git-info');
 const ignore = require('ignore');
+const simpleGit = require('simple-git');
 
 export function checkFilesIgnore (ignoreFile, files) {
   const ig = ignore().add(fs.readFileSync(ignoreFile).toString())
@@ -57,4 +58,27 @@ export function getCDNUrl (repoPath) {
     project
   } = hostedGitInfo.fromUrl(githubUrl)
   return `https://cdn.jsdelivr.net/gh/${user}/${project}@${branch}`;
+}
+
+export async function upload ({
+  repoPath,
+  filePath,
+  fileName,
+}) {
+  if (!repoPath || !filePath || !fileName) {
+    return false;
+  }
+  try {
+    const git = simpleGit({
+      baseDir: repoPath,
+      binary: 'git',
+      maxConcurrentProcesses: 6,
+    });
+    await git.add(filePath);
+    await git.commit(`feat: add file ${fileName}`);
+    await git.push();
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
