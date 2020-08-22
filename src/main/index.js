@@ -56,7 +56,8 @@ const createWindow = () => {
 
 const initMenubar = () => {
   // menubar 操作逻辑
-  tray = new Tray(path.resolve(__dirname, '../assets/icon@3x.png'))
+  tray = new Tray(path.resolve(__dirname, '../assets/icon@3x.png'));
+
   tray.on('click', () => {
     const more = {
       label: '更多',
@@ -101,6 +102,12 @@ const initMenubar = () => {
                 body: '请重试'
               })
             }
+          } else {
+            const buffer = clipboardImage.toPNG();
+            const d = new Date();
+            const name = d.getTime() + '.png';
+            const filePath = (uploadDir || repoPath) + '/' + name;
+            await fs.writeFile(filePath, buffer);
           }
         }
       })
