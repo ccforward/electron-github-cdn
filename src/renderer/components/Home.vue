@@ -55,15 +55,15 @@
       </div>
       <div class="gallery">
         <div v-for="item in listFiles" :key="item.path" @click="open(item.cdn)" class="file-item">
-          <a-tooltip>
-            <template slot="title">
-              {{ item.path }}
-            </template>
-            <a-tag class="file-name" color="#333">
-              {{ item.name }}
-            </a-tag>
-          </a-tooltip>
+          <a-tag class="file-name" color="#333">
+            {{ item.name }}
+          </a-tag>
           <div class="img-wrap">
+            <div class="info-cover">
+              <span>{{ item.name }}</span>
+              <span>大小：{{ item.size }}</span>
+              <span>时间：{{ item.date }}</span>
+            </div>
             <img
               v-if="item.isPic"
               slot="extra"
@@ -208,13 +208,14 @@ export default {
         allFiles.sort((x, y) => y.stats.ctime.getTime() - x.stats.ctime.getTime());
         allFiles.forEach(file => {
           const { path, stats } = file;
+          const date = new Date(stats.ctime.getTime());
           files.push({
             name: path.split('/').reverse()[0].trim(),
             path: path.replace(this.repoPath + '/', ''),
             cdn: path.replace(this.repoPath, this.cdnUrl),
             isPic: isPic(path),
-            date: stats.ctime.getTime(),
-            size: (stats.size / 1024).toFixed(0)
+            date: date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate(),
+            size: (stats.size / 1024).toFixed(0) + ' KB'
           })
         })
         const ignoreFile = `${this.repoPath}/.gitignore`;
@@ -374,7 +375,7 @@ body {
     line-height: 20px;
   }
   .img-wrap {
-    display: block;
+    position: relative;
     width: 152px;
     height: 186px;
     line-height: 186px;
@@ -382,7 +383,29 @@ body {
     overflow: hidden;
     background-color: #555;
     background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAChJREFUeNpiPHPmDAMMGBsbw9lMDDgA6RKM%2F%2F%2F%2Fh3POnj1LCzsAAgwAQtYIcFfEyzkAAAAASUVORK5CYII%3D);
+    .info-cover {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 50%;
+      padding: 10px;
+      flex-direction: column;
+      color: #fff;
+      line-height: 15px;
+      text-align: left;
+      font-size: 12px;
+      background: rgba(0, 0, 0, 0.5);
+      span {
+        margin-bottom: 5px;
+      }
+    }
+    &:hover .info-cover {
+      display: flex;
+    }
     img {
+      width: 100%;
       max-height: 161px;
       max-width: 172px;
     }
