@@ -54,11 +54,11 @@
         <a-switch default-checked @click="onTogglePic" />
       </div>
       <div class="gallery">
-        <div v-for="item in listFiles" :key="item.path" @click="open(item.cdn)" class="file-item">
+        <div v-for="item in listFiles" :key="item.path" class="file-item">
           <a-tag class="file-name" color="#333">
             {{ item.name }}
           </a-tag>
-          <div class="img-wrap">
+          <div class="img-wrap" @click="open(item.cdn)">
             <div class="info-cover">
               <span>{{ item.name }}</span>
               <span>大小：{{ item.size }}</span>
@@ -72,6 +72,9 @@
             />
             <a-icon v-else :style="{ fontSize: '30px', color: '#333' }" type="file-protect" />
           </div>
+          <a-button icon="copy" type="primary" class="btn-copy" size="small" @click.prevent="copyLink(item.cdn)">
+            复制链接
+          </a-button>
         </div>
       </div>
     </main>
@@ -94,7 +97,7 @@ const Store = require('electron-store');
 
 const store = new Store();
 const { dialog } = electron.remote;
-const { ipcRenderer } = electron
+const { clipboard, ipcRenderer } = electron
 
 export default {
   name: 'home-page',
@@ -214,7 +217,8 @@ export default {
             path: path.replace(this.repoPath + '/', ''),
             cdn: path.replace(this.repoPath, this.cdnUrl),
             isPic: isPic(path),
-            date: date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate(),
+            date: date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate() + ' ' +
+                  date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds(),
             size: (stats.size / 1024).toFixed(0) + ' KB'
           })
         })
@@ -235,6 +239,10 @@ export default {
     },
     open (link) {
       this.$electron.shell.openExternal(link);
+    },
+    copyLink (url) {
+      clipboard.writeText(url);
+      this.$message.success('链接复制成功');
     },
     resetData () {
       this.onlyPic = true;
@@ -340,9 +348,9 @@ body {
   .file-item {
     position: relative;
     display: inline-block;
-    width: 155px;
+    width: 175px;
     height: 186px;
-    margin-bottom: 12px;
+    margin-bottom: 40px;
     margin-right: 10px;
     border: 1px solid #ddd;
     cursor: pointer;
@@ -376,8 +384,9 @@ body {
   }
   .img-wrap {
     position: relative;
-    width: 152px;
+    width: 172px;
     height: 186px;
+    margin-bottom: 5px;
     line-height: 186px;
     text-align: center;
     overflow: hidden;
@@ -390,12 +399,12 @@ body {
       left: 0;
       width: 100%;
       height: 50%;
-      padding: 10px;
+      padding: 6px;
       flex-direction: column;
       color: #fff;
       line-height: 15px;
       text-align: left;
-      font-size: 12px;
+      font-size: 11.5px;
       background: rgba(0, 0, 0, 0.5);
       span {
         margin-bottom: 5px;
@@ -405,10 +414,13 @@ body {
       display: flex;
     }
     img {
-      width: 100%;
       max-height: 161px;
-      max-width: 172px;
+      max-width: 100%;
     }
+  }
+  .btn-copy {
+    height: 22px;
+    font-size: 12px;
   }
 }
 
