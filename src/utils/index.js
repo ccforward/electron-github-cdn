@@ -23,14 +23,17 @@ export function isGitRepo (filePath) {
 
 export function fileDisplay (filePath) {
   const files = fs.readdirSync(filePath);
-  return files.reduce(function (filesArr, filename) {
-    var filedir = path.join(filePath, filename);
+  return files.reduce(function (filesArr, fileName) {
+    var filedir = path.join(filePath, fileName);
     // 根据文件路径获取文件信息，返回一个fs.Stats对象
     const stats = fs.statSync(filedir);
     var isFile = stats.isFile();
     var isDir = stats.isDirectory();
     if (isFile) {
-      filesArr.push(filedir)
+      filesArr.push({
+        path: filedir,
+        stats
+      })
     }
     if (isDir && !/node_modules|\.git/.test(filedir)) {
       filesArr.push(...fileDisplay(filedir));

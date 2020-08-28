@@ -143,11 +143,6 @@ const initMenubar = () => {
         enabled: imgList.length > 0,
         click: () => {
           imgList.splice(0, imgList.length);
-          // const notify = new Notification({
-          //   title: '通知',
-          //   body: '清空'
-          // });
-          // notify.show();
         }
       },
       more

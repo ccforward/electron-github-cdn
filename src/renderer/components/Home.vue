@@ -203,14 +203,18 @@ export default {
     getAllFiles () {
       if (this.repoPath) {
         this.loadingFile = true;
-        const allPaths = fileDisplay(this.repoPath, []);
+        const allFiles = fileDisplay(this.repoPath);
         let files = [];
-        allPaths.forEach(path => {
+        allFiles.sort((x, y) => y.stats.ctime.getTime() - x.stats.ctime.getTime());
+        allFiles.forEach(file => {
+          const { path, stats } = file;
           files.push({
             name: path.split('/').reverse()[0].trim(),
             path: path.replace(this.repoPath + '/', ''),
             cdn: path.replace(this.repoPath, this.cdnUrl),
-            isPic: isPic(path)
+            isPic: isPic(path),
+            date: stats.ctime.getTime(),
+            size: (stats.size / 1024).toFixed(0)
           })
         })
         const ignoreFile = `${this.repoPath}/.gitignore`;
