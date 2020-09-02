@@ -8,6 +8,7 @@ import {
   ipcMain,
   clipboard,
   Notification,
+  nativeImage,
 } from 'electron'
 import path from 'path';
 import fs from 'fs';
@@ -58,8 +59,12 @@ const createWindow = () => {
 }
 
 const initMenubar = () => {
+  const icon = nativeImage.createFromPath(path.resolve(__dirname, '../assets/icon@3x.png')).resize({
+    width: 16,
+    height: 16,
+  });
   // menubar 操作逻辑
-  tray = new Tray(path.resolve(__dirname, '../assets/icon@3x.png'));
+  tray = new Tray(icon);
 
   tray.on('click', () => {
     const more = {
