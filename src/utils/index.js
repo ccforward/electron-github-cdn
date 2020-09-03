@@ -1,3 +1,7 @@
+import {
+  Notification,
+} from 'electron';
+
 const fs = require('fs');
 const path = require('path');
 const parseGit = require('parse-git-config');
@@ -84,4 +88,15 @@ export async function upload ({
   } catch (e) {
     return false;
   }
+}
+
+export function triggerNotify ({
+  title,
+  body
+}) {
+  const notify = new Notification({
+    title,
+    body
+  });
+  notify.show();
 }
