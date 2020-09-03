@@ -7,4 +7,4 @@ Parse GitHub file url to jsdelivr's cdn.
 
 
 
-![](https://cdn.jsdelivr.net/gh/ccforward/electron-github-cdn@master/static/readme.jpg)
+![](https://cdn.jsdelivr.net/gh/ccforward/assets@master/x/1599125618561.png)
