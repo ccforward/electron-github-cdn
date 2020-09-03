@@ -163,47 +163,48 @@ export default {
         this.listFiles = this.allFiles
       }
     },
-    setRepoPath () {
-      dialog.showOpenDialog({ properties: ['openDirectory'], message: '选择 GitHub 仓库根目录' }, filePath => {
-        if (filePath && filePath.length === 1) {
-          this.__initRepoPath(filePath[0]);
-        }
+    async setRepoPath () {
+      const { filePaths } = await dialog.showOpenDialog({
+        properties: ['openDirectory'],
+        message: '选择 GitHub 仓库根目录'
       });
-    },
-    __initRepoPath (filePath) {
-      if (isGitRepo(filePath)) {
-        const repoPath = filePath;
-        const cdnUrl = getCDNUrl(repoPath);
-        if (!cdnUrl) this.$message.error('需要选择一个 GitHub 仓库！');
-        this.resetData();
-        this.repoPath = repoPath;
-        store.set('repoPath', repoPath);
-        this.cdnUrl = cdnUrl;
-        this.getAllFiles();
-        ipcRenderer.send('onRepoPathChange', this.repoPath);
-      } else {
-        this.$message.error('需要选择一个 GitHub 仓库！');
+      if (filePaths && filePaths.length === 1) {
+        this.__initRepoPath(filePaths[0]);
       }
     },
-    setCustomDir () {
-      dialog.showOpenDialog({
+    __initRepoPath (filePath) {
+      if (!isGitRepo(filePath)) {
+        return this.$message.error('需要选择一个 GitHub 仓库！');
+      }
+      const repoPath = filePath;
+      const cdnUrl = getCDNUrl(repoPath);
+      if (!cdnUrl) this.$message.error('需要选择一个 GitHub 仓库！');
+      this.resetData();
+      this.repoPath = repoPath;
+      store.set('repoPath', repoPath);
+      this.cdnUrl = cdnUrl;
+      this.getAllFiles();
+      ipcRenderer.send('onRepoPathChange', this.repoPath);
+    },
+    async setCustomDir () {
+      const { filePaths } = await dialog.showOpenDialog({
         defaultPath: this.repoPath,
         properties: ['openDirectory', 'createDirectory'],
         message: '选择要存储文件的目录'
-      }, filePath => {
-        if (filePath && filePath.length === 1 && filePath[0].startsWith(this.repoPath)) {
-          const ignoreFile = `${this.repoPath}/.gitignore`;
-          if ((filePath[0] !== this.repoPath) && fs.existsSync(ignoreFile) && isPathIgnored(ignoreFile, filePath[0].replace(this.repoPath + '/', '') + '/')) {
-            this.$message.error(`${filePath[0]} is ignored!`);
-          } else {
-            this.customDir = filePath[0];
-            store.set('customDir', this.customDir);
-            ipcRenderer.send('onUploadDirChange', this.customDir);
-          }
-        } else {
-          this.$message.error('需要选择当前 GitHub 仓库的子目录！');
-        }
       });
+
+      if (filePaths && filePaths.length === 1 && filePaths[0].startsWith(this.repoPath)) {
+        const ignoreFile = `${this.repoPath}/.gitignore`;
+        if ((filePaths[0] !== this.repoPath) && fs.existsSync(ignoreFile) && isPathIgnored(ignoreFile, filePaths[0].replace(this.repoPath + '/', '') + '/')) {
+          this.$message.error(`${filePaths[0]} is ignored!`);
+        } else {
+          this.customDir = filePaths[0];
+          store.set('customDir', this.customDir);
+          ipcRenderer.send('onUploadDirChange', this.customDir);
+        }
+      } else {
+        this.$message.error('需要选择当前 GitHub 仓库的子目录！');
+      }
     },
     deleteCustomDir () {
       this.customDir = '';

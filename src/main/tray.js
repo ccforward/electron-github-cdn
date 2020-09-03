@@ -19,7 +19,7 @@ let uploadDir = '';
 let repoPath = '';
 const imgList = [];
 
-export default function initMenubar (iconPath, mainWindow, createWindow) {
+export default function initMenubar (iconPath, showWindow) {
   const icon = nativeImage.createFromPath(iconPath).resize({
     width: 16,
     height: 16,
@@ -98,11 +98,7 @@ export default function initMenubar (iconPath, mainWindow, createWindow) {
       label: '设置/上传',
       type: 'normal',
       click: () => {
-        if (mainWindow) {
-          mainWindow.show()
-        } else {
-          createWindow();
-        }
+        showWindow();
       }
     }, {
       label: '清空',

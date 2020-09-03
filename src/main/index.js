@@ -41,8 +41,10 @@ const createWindow = () => {
 }
 
 const initWindow = () => {
-  initMenubar(trayIconPath, mainWindow, createWindow);
   createWindow();
+  initMenubar(trayIconPath, _ => {
+    mainWindow ? mainWindow.show() : createWindow()
+  });
 }
 
 app.on('ready', initWindow)
