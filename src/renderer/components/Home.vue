@@ -27,22 +27,22 @@
     </div>
     <div v-if="repoPath" class="upload-box">
       <a-spin :spinning="isUploading" tip="Loading...">
-      <a-upload-dragger
-        name="file"
-        :multiple="true"
-        :beforeUpload="() => false"
-        @change="onUpload"
-      >
-        <p class="ant-upload-drag-icon">
-          <a-icon type="inbox" />
-        </p>
-        <p class="upload-text">
-          拖拽（多个）图片上传 / <a-button size="small" type="primary">点击上传(可多选)</a-button>
-        </p>
-        <p class="upload-hint">
-          （ 支持类型：JPG，JPEG，PNG，GIF，BMP，WEBP，ICO，SVG ）
-        </p>
-      </a-upload-dragger>
+        <a-upload-dragger
+          name="file"
+          :multiple="true"
+          :beforeUpload="() => false"
+          @change="onUpload"
+        >
+          <p class="ant-upload-drag-icon">
+            <a-icon type="inbox" />
+          </p>
+          <p class="upload-text">
+            拖拽（多个）图片上传 / <a-button size="small" type="primary">点击上传(可多选)</a-button>
+          </p>
+          <p class="upload-hint">
+            （ 支持类型：JPG，JPEG，PNG，GIF，BMP，WEBP，ICO，SVG ）
+          </p>
+        </a-upload-dragger>
       </a-spin>
     </div>
     <main class="main-content">
@@ -92,6 +92,7 @@ import {
   upload,
 } from '@root/utils';
 const fs = require('fs');
+const nodePath = require('path');
 const electron = require('electron');
 const Store = require('electron-store');
 
@@ -129,7 +130,12 @@ export default {
 
       if (!status) {
         this.isUploading = true
-        const filePath = (this.customDir || this.repoPath) + '/' + name;
+        const dirPath = (this.customDir || this.repoPath) + '/';
+        let filePath = dirPath + name;
+        if (fs.existsSync(filePath)) {
+          const extName = nodePath.extname(filePath);
+          filePath = filePath.replace(extName, '') + '_2' + extName;
+        }
         fs.copyFileSync(path, filePath);
         const ret = await upload({
           repoPath: this.repoPath,
