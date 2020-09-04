@@ -55,6 +55,7 @@
   "dependencies": {
     "ant-design-vue": "^1.6.5",
     "axios": "^0.18.0",
+    "basic-ftp": "^4.6.2",
     "electron-store": "^6.0.0",
     "hosted-git-info": "^3.0.5",
     "ignore": "^5.1.8",
