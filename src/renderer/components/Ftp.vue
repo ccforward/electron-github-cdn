@@ -1,6 +1,6 @@
 <template>
   <div class="wrapper">
-    <h1 class="title">FTP</h1>
+    <h1 class="title">FTP For GodD丶小翊</h1>
     <a-form align="center">
       <a-form-item>
         <a-input v-model="ftpHost" placeholder="host">
@@ -19,7 +19,7 @@
       </a-form-item>
       <a-form-item>
         <a-input v-model="httpHost" placeholder="HTTP HOST">
-          <a-icon slot="prefix" type="folder" style="color: rgba(0,0,0,.25)" />
+          <a-icon slot="prefix" type="global" style="color: rgba(0,0,0,.25)" />
         </a-input>
       </a-form-item>
       <a-form-item>
@@ -88,8 +88,10 @@ export default {
         ftpHost: this.ftpHost,
         ftpUser: this.ftpUser,
         ftpPassword: this.ftpPassword,
+        httpHost: this.httpHost,
         folder: this.folder,
       });
+      this.$message.success('FTP setting save successfully');
     }
   },
 };

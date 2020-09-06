@@ -99,13 +99,26 @@ export default function initMenubar (iconPath, showWindow) {
             const buffer = clipboardImage.toPNG();
             const d = new Date();
             fileName = d.getTime() + '.png';
-            filePath = (uploadDir || repoPath) + '/' + fileName;
-            fs.writeFileSync(filePath, buffer);
-            ret = await upload({
-              repoPath,
-              filePath,
-              fileName,
-            });
+            if (useFtp) {
+              const tempFilePath = app.getPath('temp') + fileName
+              fs.writeFileSync(tempFilePath, buffer);
+              ret = await ftpUpload({
+                filePath: tempFilePath,
+                fileName,
+                host: ftpHost,
+                user: ftpUser,
+                password: ftpPassword,
+                folder: ftpFolder,
+              });
+            } else {
+              filePath = (uploadDir || repoPath) + '/' + fileName;
+              fs.writeFileSync(filePath, buffer);
+              ret = await upload({
+                repoPath,
+                filePath,
+                fileName,
+              });
+            }
           }
           if (ret) {
             let fileUrl = '';
