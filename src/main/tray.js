@@ -6,18 +6,23 @@ import {
   clipboard,
   nativeImage,
 } from 'electron'
+import Store from 'electron-store';
 import path from 'path';
 import fs from 'fs';
 import {
   getCDNUrl,
   upload,
+  ftpUpload,
   triggerNotify,
 } from '../utils';
 
 let tray;
 let uploadDir = '';
 let repoPath = '';
+let useFtp = false;
+let disableFtp = false;
 const imgList = [];
+const store = new Store();
 
 export default function initMenubar (iconPath, showWindow) {
   const icon = nativeImage.createFromPath(iconPath).resize({
@@ -28,6 +33,18 @@ export default function initMenubar (iconPath, showWindow) {
   tray = new Tray(icon);
 
   tray.on('click', () => {
+    const ftpData = store.get('ftpData');
+    const {
+      ftpHost,
+      ftpUser,
+      ftpPassword,
+      folder: ftpFolder,
+    } = ftpData;
+
+    if (!ftpHost || !ftpUser || !ftpPassword) {
+      disableFtp = true
+    }
+
     const more = {
       label: '更多',
       type: 'submenu',
@@ -54,16 +71,29 @@ export default function initMenubar (iconPath, showWindow) {
           let ret = false;
           let filePath = '';
           const originPath = clipboard.read('public.file-url');
+          // 上传本地图片
           if (originPath) {
             const fileName = path.basename(originPath);
-            filePath = (uploadDir || repoPath) + '/' + fileName;
-            fs.copyFileSync(originPath.replace('file://', ''), filePath);
-            ret = await upload({
-              repoPath,
-              filePath,
-              fileName,
-            });
+            if (useFtp) {
+              ret = await ftpUpload({
+                filePath: originPath.replace('file://', ''),
+                fileName,
+                host: ftpHost,
+                user: ftpUser,
+                password: ftpPassword,
+                folder: ftpFolder,
+              });
+            } else {
+              filePath = (uploadDir || repoPath) + '/' + fileName;
+              fs.copyFileSync(originPath.replace('file://', ''), filePath);
+              ret = await upload({
+                repoPath,
+                filePath,
+                fileName,
+              });
+            }
           } else {
+            // 上传截图
             const buffer = clipboardImage.toPNG();
             const d = new Date();
             const fileName = d.getTime() + '.png';
@@ -118,9 +148,24 @@ export default function initMenubar (iconPath, showWindow) {
         })
       });
     }
-    if (!uploadDir) {
+    if (!useFtp && !uploadDir) {
       menus.unshift({
         label: '暂未设置存储路径',
+        type: 'normal',
+        enabled: false
+      })
+    }
+
+    if (useFtp) {
+      if (disableFtp) {
+        menus.unshift({
+          label: '暂未设置FTP',
+          type: 'normal',
+          enabled: false
+        })
+      }
+      menus.unshift({
+        label: '正在使用FTP！！',
         type: 'normal',
         enabled: false
       })
@@ -134,5 +179,9 @@ export default function initMenubar (iconPath, showWindow) {
   })
   ipcMain.on('onUploadDirChange', (sys, dir) => {
     uploadDir = dir
+  })
+
+  ipcMain.on('onFtpChange', (sys, isFtp) => {
+    useFtp = isFtp
   })
 }

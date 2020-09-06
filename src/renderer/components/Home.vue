@@ -1,5 +1,11 @@
 <template>
   <div class="wrapper">
+    <div class="switch-ftp">
+      <span>FTP:</span>
+      <a-switch :default-checked="false" @click="onToggleFtp" />
+    </div>
+    <Ftp v-if="showFtp" />
+    <template v-else>
     <div class="wrap-head">
       <div class="wrap-logo">
         <a href="#" @click.prevent="open('https://github.com/')">
@@ -10,6 +16,7 @@
           <img class="logo logo-jsdelivr" src="https://img.alicdn.com/tfs/TB1kQLSQ7L0gK0jSZFAXXcA9pXa-140-34.svg" />
         </a>
       </div>
+
       <p class="title">GitHub & JSDELIVR</p>
       <p>
         All GitHub files with jsdelivr's cdn url.
@@ -78,10 +85,12 @@
         </div>
       </div>
     </main>
+    </template>
   </div>
 </template>
 
 <script>
+import Ftp from './Ftp';
 import {
   isPathIgnored,
   checkFilesIgnore,
@@ -91,6 +100,7 @@ import {
   getCDNUrl,
   upload,
 } from '@root/utils';
+
 const fs = require('fs');
 const nodePath = require('path');
 const electron = require('electron');
@@ -102,8 +112,12 @@ const { clipboard, ipcRenderer } = electron
 
 export default {
   name: 'home-page',
+  components: {
+    Ftp,
+  },
   data () {
     return {
+      showFtp: false,
       onlyPic: true,
       repoPath: '',
       customDir: '',
@@ -134,6 +148,7 @@ export default {
         let filePath = dirPath + name;
         if (fs.existsSync(filePath)) {
           const extName = nodePath.extname(filePath);
+          // TODO path.basename
           filePath = filePath.replace(extName, '') + '_2' + extName;
         }
         fs.copyFileSync(path, filePath);
@@ -154,6 +169,10 @@ export default {
           this.isUploading = false;
         }
       }
+    },
+    onToggleFtp (checked) {
+      this.showFtp = checked;
+      ipcRenderer.send('onFtpChange', checked);
     },
     onTogglePic (checked) {
       this.onlyPic = checked;
@@ -278,8 +297,12 @@ body {
 }
 
 .wrapper {
-  width: 100vw;
   padding: 60px 80px;
+}
+
+.switch-ftp {
+  margin-bottom: 20px;
+  text-align: right;
 }
 
 .wrap-head {

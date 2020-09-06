@@ -8,6 +8,7 @@ const parseGit = require('parse-git-config');
 const hostedGitInfo = require('hosted-git-info');
 const ignore = require('ignore');
 const simpleGit = require('simple-git');
+const ftp = require("basic-ftp")
 
 export function checkFilesIgnore (ignoreFile, files) {
   const ig = ignore().add(fs.readFileSync(ignoreFile).toString())
@@ -65,6 +66,38 @@ export function getCDNUrl (repoPath) {
     project
   } = hostedGitInfo.fromUrl(githubUrl)
   return `https://cdn.jsdelivr.net/gh/${user}/${project}@${branch}`;
+}
+
+export async function ftpUpload ({
+  filePath,
+  fileName,
+  host,
+  user,
+  password,
+  folder
+}) {
+  if (!filePath || !fileName || !host || !user || !password) {
+    return false;
+  }
+  const client = new ftp.Client();
+  client.ftp.verbose = false;
+  try {
+    await client.access({
+      host,
+      user,
+      password,
+      secure: false
+    })
+    // 确认文件夹名
+    folder && await client.ensureDir(folder)
+    // 删除所有内容
+    // await client.clearWorkingDir()
+    // 上传文件
+    await client.uploadFrom(filePath, fileName)
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 export async function upload ({
