@@ -18,6 +18,11 @@
         </a-input>
       </a-form-item>
       <a-form-item>
+        <a-input v-model="httpHost" placeholder="HTTP HOST">
+          <a-icon slot="prefix" type="folder" style="color: rgba(0,0,0,.25)" />
+        </a-input>
+      </a-form-item>
+      <a-form-item>
         <a-input v-model="folder" placeholder="存储文件夹">
           <a-icon slot="prefix" type="folder" style="color: rgba(0,0,0,.25)" />
         </a-input>
@@ -53,6 +58,7 @@ export default {
       ftpHost: '',
       ftpUser: '',
       ftpPassword: '',
+      httpHost: '',
       folder: '',
     };
   },
@@ -63,11 +69,13 @@ export default {
         ftpHost,
         ftpUser,
         ftpPassword,
+        httpHost,
         folder,
       } = ftpData;
       this.ftpHost = ftpHost
       this.ftpUser = ftpUser
       this.ftpPassword = ftpPassword
+      this.httpHost = httpHost
       this.folder = folder
     }
   },

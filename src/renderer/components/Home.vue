@@ -2,7 +2,7 @@
   <div class="wrapper">
     <div class="switch-ftp">
       <span>FTP:</span>
-      <a-switch :default-checked="false" @click="onToggleFtp" />
+      <a-switch v-model="showFtp" @click="onToggleFtp" />
     </div>
     <Ftp v-if="showFtp" />
     <template v-else>
@@ -137,6 +137,9 @@ export default {
       ipcRenderer.send('onUploadDirChange', this.customDir);
       ipcRenderer.send('onRepoPathChange', this.repoPath);
     }
+    const useFtp = store.get('useFtp') || false;
+    this.showFtp = useFtp
+    ipcRenderer.send('onFtpChange', useFtp);
   },
   methods: {
     async onUpload (info) {
@@ -172,6 +175,7 @@ export default {
     },
     onToggleFtp (checked) {
       this.showFtp = checked;
+      store.set('useFtp', checked);
       ipcRenderer.send('onFtpChange', checked);
     },
     onTogglePic (checked) {

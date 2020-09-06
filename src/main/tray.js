@@ -38,6 +38,7 @@ export default function initMenubar (iconPath, showWindow) {
       ftpHost,
       ftpUser,
       ftpPassword,
+      httpHost: ftpHttpHost,
       folder: ftpFolder,
     } = ftpData;
 
@@ -70,10 +71,11 @@ export default function initMenubar (iconPath, showWindow) {
         click: async () => {
           let ret = false;
           let filePath = '';
+          let fileName = '';
           const originPath = clipboard.read('public.file-url');
           // 上传本地图片
           if (originPath) {
-            const fileName = path.basename(originPath);
+            fileName = path.basename(originPath);
             if (useFtp) {
               ret = await ftpUpload({
                 filePath: originPath.replace('file://', ''),
@@ -96,7 +98,7 @@ export default function initMenubar (iconPath, showWindow) {
             // 上传截图
             const buffer = clipboardImage.toPNG();
             const d = new Date();
-            const fileName = d.getTime() + '.png';
+            fileName = d.getTime() + '.png';
             filePath = (uploadDir || repoPath) + '/' + fileName;
             fs.writeFileSync(filePath, buffer);
             ret = await upload({
@@ -106,13 +108,20 @@ export default function initMenubar (iconPath, showWindow) {
             });
           }
           if (ret) {
-            const fileUrl = filePath.replace(repoPath, getCDNUrl(repoPath));
+            let fileUrl = '';
+            if (useFtp) {
+              const folder = ftpFolder ? ftpFolder + '/' : '';
+              fileUrl = ftpHttpHost + '/' + folder + fileName
+            } else {
+              fileUrl = filePath.replace(repoPath, getCDNUrl(repoPath));
+            }
             clipboard.writeText(fileUrl);
             return triggerNotify({
               title: '上传成功',
               body: '👍'
             });
           }
+          // 失败 删除已经复制的文件
           filePath && fs.unlinkSync(filePath);
           triggerNotify({
             title: '上传失败',
