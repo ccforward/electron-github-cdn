@@ -58,8 +58,9 @@ export default function initMenubar (iconPath, showWindow) {
       }, ],
     };
     const clipboardImage = clipboard.readImage();
+    const isSameImg = (imgList.length > 0 && imgList[imgList.length - 1].raw.toDataURL() === clipboardImage.toDataURL());
 
-    if (clipboardImage && !clipboardImage.isEmpty()) {
+    if (!isSameImg && clipboardImage && !clipboardImage.isEmpty()) {
       const ratio = clipboardImage.getAspectRatio();
       const img = clipboardImage.resize({
         width: 100,
@@ -131,7 +132,7 @@ export default function initMenubar (iconPath, showWindow) {
             clipboard.writeText(fileUrl);
             return triggerNotify({
               title: '上传成功',
-              body: '👍'
+              body: fileUrl
             });
           }
           // 失败 删除已经复制的文件
