@@ -25,6 +25,7 @@ const imgList = [];
 const store = new Store();
 
 export default function initMenubar (iconPath, showWindow) {
+  if (tray) return;
   const icon = nativeImage.createFromPath(iconPath).resize({
     width: 16,
     height: 16,
@@ -196,16 +197,16 @@ export default function initMenubar (iconPath, showWindow) {
     }
     const contextMenu = Menu.buildFromTemplate(menus);
     tray.popUpContextMenu(contextMenu);
-  })
+  });
 
   ipcMain.on('onRepoPathChange', (sys, dir) => {
     repoPath = dir
-  })
+  });
   ipcMain.on('onUploadDirChange', (sys, dir) => {
     uploadDir = dir
-  })
+  });
 
   ipcMain.on('onFtpChange', (sys, isFtp) => {
     useFtp = isFtp
-  })
+  });
 }
