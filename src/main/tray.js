@@ -159,6 +159,7 @@ export default function initMenubar (iconPath, showWindow) {
       enabled: imgList.length > 0,
       click: () => {
         imgList.splice(0, imgList.length);
+        clipboard.clear();
       }
     }, more ];
     if (imgList.length) {
