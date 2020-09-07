@@ -33,7 +33,7 @@ export default function initMenubar (iconPath, showWindow) {
   tray = new Tray(icon);
 
   tray.on('click', () => {
-    const ftpData = store.get('ftpData');
+    const ftpData = store.get('ftpData') || {};
     const {
       ftpHost,
       ftpUser,
