@@ -1,6 +1,6 @@
 {
   "name": "electron-github-cdn",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "author": "ccforward",
   "description": "Parse GitHub file url to jsdelivr's cdn.",
   "license": "MIT",
