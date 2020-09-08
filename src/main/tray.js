@@ -19,10 +19,127 @@ import {
 let tray;
 let uploadDir = '';
 let repoPath = '';
-let useFtp = false;
+let isUsingFtp = false; // FTP 是否打开
 let disableFtp = false;
 const imgList = [];
+const localFileList = [];
 const store = new Store();
+
+const uploadImg = async ({
+  clipboardImage,
+  ftpHost,
+  ftpUser,
+  ftpPassword,
+  ftpHttpHost,
+  ftpFolder,
+  originPath,
+}) => {
+  let ret = false;
+  let filePath = '';
+  let fileName = '';
+  // 上传本地图片
+  if (originPath) {
+    fileName = path.basename(originPath);
+    const realPath = decodeURIComponent(originPath.replace('file://', ''));
+    if (isUsingFtp) {
+      ret = await ftpUpload({
+        filePath: realPath,
+        fileName,
+        host: ftpHost,
+        user: ftpUser,
+        password: ftpPassword,
+        folder: ftpFolder,
+      });
+    } else {
+      filePath = (uploadDir || repoPath) + '/' + fileName;
+      fs.copyFileSync(realPath, filePath);
+      ret = await upload({
+        repoPath,
+        filePath,
+        fileName,
+      });
+    }
+  } else {
+    // 上传截图
+    const buffer = clipboardImage.toPNG();
+    const d = new Date();
+    fileName = d.getTime() + '.png';
+    if (isUsingFtp) {
+      const tempFilePath = app.getPath('temp') + fileName
+      fs.writeFileSync(tempFilePath, buffer);
+      ret = await ftpUpload({
+        filePath: tempFilePath,
+        fileName,
+        host: ftpHost,
+        user: ftpUser,
+        password: ftpPassword,
+        folder: ftpFolder,
+      });
+    } else {
+      filePath = (uploadDir || repoPath) + '/' + fileName;
+      fs.writeFileSync(filePath, buffer);
+      ret = await upload({
+        repoPath,
+        filePath,
+        fileName,
+      });
+    }
+  }
+  if (ret) {
+    let fileUrl = '';
+    if (isUsingFtp) {
+      const folder = ftpFolder ? ftpFolder + '/' : '';
+      fileUrl = ftpHttpHost + '/' + folder + fileName
+    } else {
+      fileUrl = filePath.replace(repoPath, getCDNUrl(repoPath));
+    }
+    clipboard.writeText(fileUrl);
+    return triggerNotify({
+      title: '上传成功',
+      body: fileUrl
+    });
+  }
+  // 失败 删除已经复制的文件
+  filePath && fs.unlinkSync(filePath);
+  triggerNotify({
+    title: '上传失败',
+    body: '请重试'
+  })
+}
+
+const uploadLocalFile = async ({
+  ftpHost,
+  ftpUser,
+  ftpPassword,
+  ftpHttpHost,
+  ftpFolder,
+  originPath,
+}) => {
+  let ret = false;
+  let fileName = path.basename(originPath);
+  ret = await ftpUpload({
+    filePath: decodeURIComponent(originPath.replace('file://', '')),
+    fileName,
+    host: ftpHost,
+    user: ftpUser,
+    password: ftpPassword,
+    folder: ftpFolder,
+  });
+  if (ret) {
+    let fileUrl = '';
+    const folder = ftpFolder ? ftpFolder + '/' : '';
+    fileUrl = ftpHttpHost + '/' + folder + fileName
+    clipboard.writeText(fileUrl);
+    return triggerNotify({
+      title: '上传成功',
+      body: fileUrl
+    });
+  }
+  triggerNotify({
+    title: '上传失败',
+    body: '请重试'
+  })
+}
 
 export default function initMenubar (iconPath, showWindow) {
   if (tray) return;
@@ -56,97 +173,64 @@ export default function initMenubar (iconPath, showWindow) {
         click: () => {
           app.quit();
         }
-      }, ],
+      }],
     };
-    const clipboardImage = clipboard.readImage();
-    const isSameImg = (imgList.length > 0 && imgList[imgList.length - 1].raw.toDataURL() === clipboardImage.toDataURL());
 
-    if (!isSameImg && clipboardImage && !clipboardImage.isEmpty()) {
+    const clipboardImage = clipboard.readImage();
+    const originPath = clipboard.read('public.file-url');
+    let isLocalFile = false;
+    let filePath = '';
+    if (originPath) {
+      filePath = decodeURIComponent(originPath.replace('file://', ''));
+      const stat = fs.lstatSync(filePath);
+      isLocalFile = stat.isFile();
+    }
+    const isImg = !clipboardImage.isEmpty();
+
+    // 上传非图片文件(FTP)
+    if (isLocalFile && !isImg) {
+      const isSameFile = (localFileList.length > 0 && localFileList[localFileList.length - 1].filePath === filePath);
+      if (!isSameFile) {
+        localFileList.push({
+          filePath,
+          click: () => uploadLocalFile({
+            ftpHost,
+            ftpUser,
+            ftpPassword,
+            ftpHttpHost,
+            ftpFolder,
+            originPath,
+          })
+        })
+      }
+    }
+    // 上传图片
+    if (isImg) {
+      // 缩略图
       const ratio = clipboardImage.getAspectRatio();
       const img = clipboardImage.resize({
         width: 100,
         height: ratio / 100,
       });
-      imgList.push({
-        img,
-        raw: clipboardImage,
-        click: async () => {
-          let ret = false;
-          let filePath = '';
-          let fileName = '';
-          const originPath = clipboard.read('public.file-url');
-          // 上传本地图片
-          if (originPath) {
-            fileName = path.basename(originPath);
-            if (useFtp) {
-              ret = await ftpUpload({
-                filePath: originPath.replace('file://', ''),
-                fileName,
-                host: ftpHost,
-                user: ftpUser,
-                password: ftpPassword,
-                folder: ftpFolder,
-              });
-            } else {
-              filePath = (uploadDir || repoPath) + '/' + fileName;
-              fs.copyFileSync(originPath.replace('file://', ''), filePath);
-              ret = await upload({
-                repoPath,
-                filePath,
-                fileName,
-              });
-            }
-          } else {
-            // 上传截图
-            const buffer = clipboardImage.toPNG();
-            const d = new Date();
-            fileName = d.getTime() + '.png';
-            if (useFtp) {
-              const tempFilePath = app.getPath('temp') + fileName
-              fs.writeFileSync(tempFilePath, buffer);
-              ret = await ftpUpload({
-                filePath: tempFilePath,
-                fileName,
-                host: ftpHost,
-                user: ftpUser,
-                password: ftpPassword,
-                folder: ftpFolder,
-              });
-            } else {
-              filePath = (uploadDir || repoPath) + '/' + fileName;
-              fs.writeFileSync(filePath, buffer);
-              ret = await upload({
-                repoPath,
-                filePath,
-                fileName,
-              });
-            }
-          }
-          if (ret) {
-            let fileUrl = '';
-            if (useFtp) {
-              const folder = ftpFolder ? ftpFolder + '/' : '';
-              fileUrl = ftpHttpHost + '/' + folder + fileName
-            } else {
-              fileUrl = filePath.replace(repoPath, getCDNUrl(repoPath));
-            }
-            clipboard.writeText(fileUrl);
-            return triggerNotify({
-              title: '上传成功',
-              body: fileUrl
-            });
-          }
-          // 失败 删除已经复制的文件
-          filePath && fs.unlinkSync(filePath);
-          triggerNotify({
-            title: '上传失败',
-            body: '请重试'
+      const isSameImg = (imgList.length > 0 && imgList[imgList.length - 1].img.toDataURL() === img.toDataURL());
+      if (!isSameImg) {
+        imgList.push({
+          img,
+          raw: clipboardImage,
+          click: () => uploadImg({
+            clipboardImage,
+            ftpHost,
+            ftpUser,
+            ftpPassword,
+            ftpHttpHost,
+            ftpFolder,
+            originPath,
           })
-        }
-      })
+        })
+      }
     }
+
     const menus = [{
-      label: '',
       type: 'separator'
     }, {
       label: '设置/上传',
@@ -173,7 +257,21 @@ export default function initMenubar (iconPath, showWindow) {
         })
       });
     }
-    if (!useFtp && !uploadDir) {
+    if (localFileList.length) {
+      menus.unshift({
+        type: 'separator'
+      })
+      localFileList.map((item, index) => {
+        menus.unshift({
+          label: item.filePath,
+          type: 'normal',
+          click: item.click,
+          enabled: isUsingFtp
+        })
+      });
+    }
+
+    if (!isUsingFtp && !uploadDir) {
       menus.unshift({
         label: '暂未设置存储路径',
         type: 'normal',
@@ -181,7 +279,7 @@ export default function initMenubar (iconPath, showWindow) {
       })
     }
 
-    if (useFtp) {
+    if (isUsingFtp) {
       if (disableFtp) {
         menus.unshift({
           label: '暂未设置FTP',
@@ -206,7 +304,7 @@ export default function initMenubar (iconPath, showWindow) {
     uploadDir = dir
   });
 
-  ipcMain.on('onFtpChange', (sys, isFtp) => {
-    useFtp = isFtp
+  ipcMain.on('onFtpSwitchChange', (sys, isFtp) => {
+    isUsingFtp = isFtp
   });
 }

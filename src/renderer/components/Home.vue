@@ -139,7 +139,7 @@ export default {
     }
     const useFtp = store.get('useFtp') || false;
     this.showFtp = useFtp
-    ipcRenderer.send('onFtpChange', useFtp);
+    ipcRenderer.send('onFtpSwitchChange', useFtp);
   },
   methods: {
     async onUpload (info) {
@@ -176,7 +176,7 @@ export default {
     onToggleFtp (checked) {
       this.showFtp = checked;
       store.set('useFtp', checked);
-      ipcRenderer.send('onFtpChange', checked);
+      ipcRenderer.send('onFtpSwitchChange', checked);
     },
     onTogglePic (checked) {
       this.onlyPic = checked;

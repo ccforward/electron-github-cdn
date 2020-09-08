@@ -4,27 +4,27 @@
     <a-form align="center">
       <a-form-item>
         <a-input v-model="ftpHost" placeholder="host">
-          <a-icon slot="prefix" type="cloud-server" style="color: rgba(0,0,0,.25)" />
+          <a-icon class="form-icon" slot="prefix" type="cloud-server" />
         </a-input>
       </a-form-item>
       <a-form-item>
         <a-input v-model="ftpUser" placeholder="user" >
-          <a-icon slot="prefix" type="user" style="color: rgba(0,0,0,.25)" />
+          <a-icon class="form-icon" slot="prefix" type="user" />
         </a-input>
       </a-form-item>
       <a-form-item>
         <a-input type="password" v-model="ftpPassword" placeholder="password">
-          <a-icon slot="prefix" type="lock" style="color: rgba(0,0,0,.25)" />
+          <a-icon class="form-icon" slot="prefix" type="lock" />
         </a-input>
       </a-form-item>
       <a-form-item>
         <a-input v-model="httpHost" placeholder="HTTP HOST">
-          <a-icon slot="prefix" type="global" style="color: rgba(0,0,0,.25)" />
+          <a-icon class="form-icon" slot="prefix" type="global" />
         </a-input>
       </a-form-item>
       <a-form-item>
         <a-input v-model="folder" placeholder="存储文件夹">
-          <a-icon slot="prefix" type="folder" style="color: rgba(0,0,0,.25)" />
+          <a-icon class="form-icon" slot="prefix" type="folder" />
         </a-input>
       </a-form-item>
       <a-form-item :wrapper-col="{ span: 24, offset: 0 }">
@@ -37,17 +37,6 @@
 </template>
 
 <script>
-// import {
-//   isPathIgnored,
-//   checkFilesIgnore,
-//   isGitRepo,
-//   fileDisplay,
-//   isPic,
-//   getCDNUrl,
-//   upload,
-// } from '@root/utils';
-// const fs = require('fs');
-// const nodePath = require('path');
 const Store = require('electron-store');
 
 const store = new Store();
@@ -80,9 +69,6 @@ export default {
     }
   },
   methods: {
-    async onUpload () {
-
-    },
     onSave () {
       store.set('ftpData', {
         ftpHost: this.ftpHost,
@@ -98,6 +84,9 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+  .form-icon {
+    color: rgba(0,0,0,.25)
+  }
   .title {
     text-align: center
   }
