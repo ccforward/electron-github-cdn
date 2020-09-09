@@ -8,7 +8,7 @@ const parseGit = require('parse-git-config');
 const hostedGitInfo = require('hosted-git-info');
 const ignore = require('ignore');
 const simpleGit = require('simple-git');
-const ftp = require("basic-ftp")
+const ftp = require('basic-ftp')
 
 export function checkFilesIgnore (ignoreFile, files) {
   const ig = ignore().add(fs.readFileSync(ignoreFile).toString())
@@ -108,17 +108,19 @@ export async function upload ({
   if (!repoPath || !filePath || !fileName) {
     return false;
   }
+  const git = simpleGit({
+    baseDir: repoPath,
+    binary: 'git',
+    maxConcurrentProcesses: 6,
+  });
   try {
-    const git = simpleGit({
-      baseDir: repoPath,
-      binary: 'git',
-      maxConcurrentProcesses: 6,
-    });
+    await git.pull();
     await git.add(filePath);
     await git.commit(`feat: add file ${fileName}`);
     await git.push();
     return true;
   } catch (e) {
+    await git.rm(filePath)
     return false;
   }
 }
