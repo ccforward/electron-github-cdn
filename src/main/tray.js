@@ -147,6 +147,7 @@ export default function initMenubar (iconPath, showWindow) {
     width: 16,
     height: 16,
   });
+  icon.setTemplateImage(true);
   // menubar 操作逻辑
   tray = new Tray(icon);
 
